@@ -1,14 +1,13 @@
 ## Describe your changes
 
-## Issue ticket number and link
-Closes #xxxx (Replace xxxx with the GitHub issue number)
+<!-- Describe your changes  -->
 
 ## Checklist before requesting a review
 - [ ] I have performed a self-review of my code
 
 - Check the correct box. Does this PR contain:
   - [ ] Breaking changes
-  - [ ] New functionality
+  - [ ] New functionality (new method, new metric, ...)
   - [ ] Major changes
   - [ ] Minor changes
   - [ ] Bug fixes
@@ -16,9 +15,3 @@ Closes #xxxx (Replace xxxx with the GitHub issue number)
 - [ ] Proposed changes are described in the CHANGELOG.md
 
 - [ ] CI Tests succeed and look good!
-
-## Requirements after merging
-
-- [ ] Need to regenerate `common/` resources
-
-- [ ] Need to regenerate task-specific resources. Specify: <all or ...>
