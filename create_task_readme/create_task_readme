@@ -175,6 +175,16 @@ function ViashHelp {
   echo "Create a README for the task."
   echo ""
   echo "Inputs:"
+  echo "    --task"
+  echo "        type: string"
+  echo "        example: denoising"
+  echo "        Which task the component will be added to."
+  echo ""
+  echo "    --task_dir"
+  echo "        type: file, file must exist"
+  echo "        default: src/tasks/\${VIASH_PAR_TASK}"
+  echo "        Path to the task directory."
+  echo ""
   echo "    --viash_yaml"
   echo "        type: file, file must exist"
   echo "        default: _viash.yaml"
@@ -428,9 +438,9 @@ RUN release_info=$(curl -s https://api.github.com/repos/quarto-dev/quarto-cli/re
   rm /opt/quarto.deb
 
 LABEL org.opencontainers.image.description="Companion container for running component common create_task_readme"
-LABEL org.opencontainers.image.created="2024-05-31T22:02:56+02:00"
+LABEL org.opencontainers.image.created="2024-06-06T22:44:20+02:00"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/openproblems-v2"
-LABEL org.opencontainers.image.revision="976f612ad2b2eba98ac1065f172fb0851220d4f2"
+LABEL org.opencontainers.image.revision="2a8390cc524bcb2eba803536b02f6f083d388b9a"
 LABEL org.opencontainers.image.version="dev"
 
 VIASHDOCKER
@@ -584,6 +594,28 @@ while [[ $# -gt 0 ]]; do
         --version)
             echo "create_task_readme dev"
             exit
+            ;;
+        --task)
+            [ -n "$VIASH_PAR_TASK" ] && ViashError Bad arguments for option \'--task\': \'$VIASH_PAR_TASK\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
+            VIASH_PAR_TASK="$2"
+            [ $# -lt 2 ] && ViashError Not enough arguments passed to --task. Use "--help" to get more information on the parameters. && exit 1
+            shift 2
+            ;;
+        --task=*)
+            [ -n "$VIASH_PAR_TASK" ] && ViashError Bad arguments for option \'--task=*\': \'$VIASH_PAR_TASK\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
+            VIASH_PAR_TASK=$(ViashRemoveFlags "$1")
+            shift 1
+            ;;
+        --task_dir)
+            [ -n "$VIASH_PAR_TASK_DIR" ] && ViashError Bad arguments for option \'--task_dir\': \'$VIASH_PAR_TASK_DIR\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
+            VIASH_PAR_TASK_DIR="$2"
+            [ $# -lt 2 ] && ViashError Not enough arguments passed to --task_dir. Use "--help" to get more information on the parameters. && exit 1
+            shift 2
+            ;;
+        --task_dir=*)
+            [ -n "$VIASH_PAR_TASK_DIR" ] && ViashError Bad arguments for option \'--task_dir=*\': \'$VIASH_PAR_TASK_DIR\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
+            VIASH_PAR_TASK_DIR=$(ViashRemoveFlags "$1")
+            shift 1
             ;;
         --viash_yaml)
             [ -n "$VIASH_PAR_VIASH_YAML" ] && ViashError Bad arguments for option \'--viash_yaml\': \'$VIASH_PAR_VIASH_YAML\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
@@ -758,6 +790,9 @@ if [ -z ${VIASH_META_TEMP_DIR+x} ]; then
 fi
 
 # filling in defaults
+if [ -z ${VIASH_PAR_TASK_DIR+x} ]; then
+  VIASH_PAR_TASK_DIR="src/tasks/${VIASH_PAR_TASK}"
+fi
 if [ -z ${VIASH_PAR_VIASH_YAML+x} ]; then
   VIASH_PAR_VIASH_YAML="_viash.yaml"
 fi
@@ -769,6 +804,10 @@ if [ -z ${VIASH_PAR_OUTPUT+x} ]; then
 fi
 
 # check whether required files exist
+if [ ! -z "$VIASH_PAR_TASK_DIR" ] && [ ! -e "$VIASH_PAR_TASK_DIR" ]; then
+  ViashError "Input file '$VIASH_PAR_TASK_DIR' does not exist."
+  exit 1
+fi
 if [ ! -z "$VIASH_PAR_VIASH_YAML" ] && [ ! -e "$VIASH_PAR_VIASH_YAML" ]; then
   ViashError "Input file '$VIASH_PAR_VIASH_YAML' does not exist."
   exit 1
@@ -825,6 +864,10 @@ fi
 
 # detect volumes from file arguments
 VIASH_CHOWN_VARS=()
+if [ ! -z "$VIASH_PAR_TASK_DIR" ]; then
+  VIASH_EXTRA_MOUNTS+=( "$(ViashAutodetectMountArg "$VIASH_PAR_TASK_DIR")" )
+  VIASH_PAR_TASK_DIR=$(ViashAutodetectMount "$VIASH_PAR_TASK_DIR")
+fi
 if [ ! -z "$VIASH_PAR_VIASH_YAML" ]; then
   VIASH_EXTRA_MOUNTS+=( "$(ViashAutodetectMountArg "$VIASH_PAR_VIASH_YAML")" )
   VIASH_PAR_VIASH_YAML=$(ViashAutodetectMount "$VIASH_PAR_VIASH_YAML")
@@ -901,6 +944,8 @@ library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 .viash_orig_warn <- options(warn = 2)
 
 par <- list(
+  "task" = $( if [ ! -z ${VIASH_PAR_TASK+x} ]; then echo -n "'"; echo -n "$VIASH_PAR_TASK" | sed "s#['\\]#\\\\&#g"; echo "'"; else echo NULL; fi ),
+  "task_dir" = $( if [ ! -z ${VIASH_PAR_TASK_DIR+x} ]; then echo -n "'"; echo -n "$VIASH_PAR_TASK_DIR" | sed "s#['\\]#\\\\&#g"; echo "'"; else echo NULL; fi ),
   "viash_yaml" = $( if [ ! -z ${VIASH_PAR_VIASH_YAML+x} ]; then echo -n "'"; echo -n "$VIASH_PAR_VIASH_YAML" | sed "s#['\\]#\\\\&#g"; echo "'"; else echo NULL; fi ),
   "github_url" = $( if [ ! -z ${VIASH_PAR_GITHUB_URL+x} ]; then echo -n "'"; echo -n "$VIASH_PAR_GITHUB_URL" | sed "s#['\\]#\\\\&#g"; echo "'"; else echo NULL; fi ),
   "output" = $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo -n "'"; echo -n "$VIASH_PAR_OUTPUT" | sed "s#['\\]#\\\\&#g"; echo "'"; else echo NULL; fi )
@@ -930,6 +975,9 @@ rm(.viash_orig_warn)
 
 ## VIASH END
 
+if (is.null(par\$task) && is.null(par\$task_dir)) {
+  stop("Either 'task' or 'task_dir' must be provided")
+}
 if (is.null(par\$viash_yaml)) {
   stop("Argument 'viash_yaml' must be provided")
 }
@@ -943,7 +991,7 @@ source(paste0(meta["resources_dir"], "/strip_margin.R"))
 source(paste0(meta["resources_dir"], "/read_api_files.R"))
 
 cat("Read task info\\n")
-task_api <- read_task_api("/src")
+task_api <- read_task_api(par[["task_dir"]])
 
 # determine ordering
 root <- .task_graph_get_root(task_api)
@@ -986,7 +1034,7 @@ readme_str <-
   }
 
 cat("Generate qmd content\\n")
-relative_path <- "/src" %>%
+relative_path <- par[["task_dir"]] %>%
   gsub(paste0(dirname(par[["viash_yaml"]]), "/*"), "", .) %>%
   gsub("/*\$", "", .)
 source_url <- paste0(par[["github_url"]], relative_path)
@@ -1051,6 +1099,9 @@ VIASHEOF
 
 
 # strip viash automount from file paths
+if [ ! -z "$VIASH_PAR_TASK_DIR" ]; then
+  VIASH_PAR_TASK_DIR=$(ViashStripAutomount "$VIASH_PAR_TASK_DIR")
+fi
 if [ ! -z "$VIASH_PAR_VIASH_YAML" ]; then
   VIASH_PAR_VIASH_YAML=$(ViashStripAutomount "$VIASH_PAR_VIASH_YAML")
 fi
