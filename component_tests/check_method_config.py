@@ -20,7 +20,8 @@ MEM_LABELS = ["lowmem", "midmem", "highmem"]
 CPU_LABELS = ["lowcpu", "midcpu", "highcpu"]
 
 def _load_bib():
-    with open(f"{meta["resources_dir"]}/library.bib", "r") as file:
+    bib_path = meta["resources_dir"]+"/library.bib"
+    with open(bib_path, "r") as file:
         return file.read()
 
 def check_url(url):
