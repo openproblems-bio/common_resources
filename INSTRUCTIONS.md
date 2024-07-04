@@ -22,17 +22,7 @@ A list of required software to start developing a new task can be found in the [
 
 ### `common` submodule
 
-If the submodule does not show any files, you will need to initialize the `common` submodule by running the following command:
-
-```bash
-git submodule update --init --recursive
-```
-
-To update the repository with the latest changes from in the submodule, you can run the following command:
-
-```bash
-git pull --recurse-submodules
-```
+Check the instructions [here](README.md) for more information.
 
 ## Resources
 
