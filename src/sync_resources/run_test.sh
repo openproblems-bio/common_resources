@@ -4,7 +4,7 @@
 ## VIASH END
 
 echo ">> Run aws s3 sync"
-./$meta_functionality_name \
+./$meta_name \
   --input s3://openproblems-data/resources_test/common/pancreas \
   --output foo \
   --quiet
