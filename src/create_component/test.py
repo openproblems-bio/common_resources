@@ -1,4 +1,3 @@
-import os
 import subprocess
 from os import path
 from ruamel.yaml import YAML
@@ -31,21 +30,20 @@ if out.returncode:
     exit(out.returncode)
 
 print('>> Checking whether output files exist', flush=True)
-assert os.path.exists(output_path), "Output dir does not exist"
+assert path.exists(output_path), "Output dir does not exist"
 
 conf_f = path.join(output_path, 'config.vsh.yaml')
-assert os.path.exists(conf_f), "Config file does not exist"
+assert path.exists(conf_f), "Config file does not exist"
 
 script_f = path.join(output_path, "script.py")
-assert os.path.exists(script_f), "Script file does not exist"
+assert path.exists(script_f), "Script file does not exist"
 
 print('>> Checking file contents', flush=True)
 yaml = YAML(typ='safe', pure=True)
 with open(conf_f) as f:
     conf_data = yaml.load(f)
 
-assert conf_data['functionality']['name'] == 'test_method', "Name should be equal to 'test_method'"
-# assert conf_data['platforms'][0]['image'] == 'python:3.10', "Python image should be equal to python:3.10"
+assert conf_data['name'] == 'test_method', "Name should be equal to 'test_method'"
 
 
 print('All checks succeeded!', flush=True)
