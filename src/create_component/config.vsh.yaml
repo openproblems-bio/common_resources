@@ -53,10 +53,6 @@ resources:
 test_resources:
   - type: python_script
     path: test.py
-  - path: /src
-    dest: openproblems-v2/src
-  - path: /_viash.yaml
-    dest: openproblems-v2/_viash.yaml
 engines:
   - type: docker
     image: python:3.10-slim
@@ -67,6 +63,10 @@ engines:
         pypi: 
         - ruamel.yaml
         - git+https://github.com/openproblems-bio/core.git#egg=openproblems&subdirectory=packages/python/openproblems
+    test_setup:
+      - type: docker
+        run: |
+          git clone https://github.com/openproblems-bio/task_template.git /tmp/task_template
 runners:
   - type: executable
   - type: nextflow

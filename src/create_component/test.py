@@ -8,19 +8,22 @@ meta = {
 }
 ## VIASH END
 
-opv2 = f"{meta['resources_dir']}/openproblems-v2"
-output_path = f"{opv2}/src/tasks/label_projection/methods/test_method"
+print(meta["resources_dir"])
+
+
+task_template = "/tmp/task_template"
+output_path = f"{task_template}/src/methods/test_method"
 
 cmd = [
     meta['executable'],
-    '--task', 'label_projection',
+    '--task', 'task_template',
     '--type', 'method',
     '--name', 'test_method',
     '--language', 'python'
 ]
 
 print('>> Running the script as test', flush=True)
-out = subprocess.run(cmd, stderr=subprocess.STDOUT, cwd=opv2)
+out = subprocess.run(cmd, stderr=subprocess.STDOUT, cwd=task_template)
 
 if out.stdout:
     print(out.stdout)
