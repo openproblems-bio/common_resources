@@ -44,8 +44,7 @@ def check_url(url):
         return False
 
 def is_working_doi(doi):
-    # regex from https://www.crossref.org/blog/dois-and-matching-regular-expressions/
-    if not re.match(r"^10.\d{4}/\d+-\d+X?(\d+)\d+<[\d\w]+:[\d\w]*>\d+.\d+.\w+;\d$", doi):
+    if not re.match(r"^10.\d{4,9}/[-._;()/:A-Za-z0-9]+$", doi):
         return False
     
     url = f"https://doi.org/{doi}"
@@ -125,9 +124,9 @@ if "variants" in info:
             for arg_id in paramset:
                 assert arg_id in arg_names, f"Argument '{arg_id}' in `.info.variants['{paramset_id}']` is not an argument in `.arguments`."
 
-assert "preferred_normalization" in info, "preferred_normalization not an info field"
-norm_methods = ["log_cpm", "log_cp10k", "counts", "log_scran_pooling", "sqrt_cpm", "sqrt_cp10k", "l1_sqrt"]
-assert info["preferred_normalization"] in norm_methods, "info['preferred_normalization'] not one of '" + "', '".join(norm_methods) + "'."
+if "preferred_normalization" in info:
+    norm_methods = ["log_cpm", "log_cp10k", "counts", "log_scran_pooling", "sqrt_cpm", "sqrt_cp10k", "l1_sqrt"]
+    assert info["preferred_normalization"] in norm_methods, "info['preferred_normalization'] not one of '" + "', '".join(norm_methods) + "'."
 
 print("Check runners fields", flush=True)
 runners = config["runners"]

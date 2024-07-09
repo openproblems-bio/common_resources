@@ -46,8 +46,7 @@ def check_url(url):
         return False
 
 def is_working_doi(doi):
-    # regex from https://www.crossref.org/blog/dois-and-matching-regular-expressions/
-    if not re.match(r"^10.\d{4}/\d+-\d+X?(\d+)\d+<[\d\w]+:[\d\w]*>\d+.\d+.\w+;\d$", doi):
+    if not re.match(r"^10.\d{4,9}/[-._;()/:A-Za-z0-9]+$", doi):
         return False
     
     url = f"https://doi.org/{doi}"
