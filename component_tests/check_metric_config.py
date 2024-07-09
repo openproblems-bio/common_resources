@@ -1,12 +1,11 @@
 import yaml
+import re
 from typing import Dict
 
 ## VIASH START
-
 meta = {
     "config" : "foo"
 }
-
 ## VIASH END
 
 NAME_MAXLEN = 50
@@ -46,8 +45,18 @@ def check_url(url):
     else:
         return False
 
+def is_working_doi(doi):
+    # regex from https://www.crossref.org/blog/dois-and-matching-regular-expressions/
+    if not re.match(r"^10.\d{4}/\d+-\d+X?(\d+)\d+<[\d\w]+:[\d\w]*>\d+.\d+.\w+;\d$", doi):
+        return False
+    
+    url = f"https://doi.org/{doi}"
+    return check_url(url)
+
 def search_ref_bib(reference):
-    import re
+    if is_working_doi(reference):
+        return True
+    
     bib = _load_bib()
     
     entry_pattern =  r"(@\w+{[^}]*" + reference + r"[^}]*}(.|\n)*?)(?=@)"
