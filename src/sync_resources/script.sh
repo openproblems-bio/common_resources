@@ -1,8 +1,7 @@
 #!/bin/bash
 
 ## VIASH START
-par_input='s3://openproblems-data/resources_test'
-par_output='resources_test'
+par_input='_viash.yaml'
 ## VIASH END
 
 extra_params=( )
