@@ -10,15 +10,15 @@ A list of required software to start developing a new task can be found in the [
 
 ### `_viash.yaml`
 
-* Update the `name` field to the name of the task in snake_case the name should start with `task_`.
-* Update the `description` field to a short description of the task.
-* Add a keyword to the `keywords` field that describes the task.
-* Update the `task_template` in the links/info field to the name of the task in snake_case.
+1. Update the `name` field to the name of the task in snake_case the name should start with `task_`.
+2. Update the `description` field to a short description of the task.
+3. Add a keyword to the `keywords` field that describes the task.
+4. Update the `task_template` in the links fields to the name of the task from step 1.
+5. Update the info fields to the text from the task issue.
+6. Replace the task_template to the name of the task in `info.name`.
+7. Update the authors of the task.
 
-### `task_info.yaml`
-
-* Update the `src/api/task_info.yaml` file with the information you have provided in the task issue.
-* Update the `<task_name>` in the `readme` field to the name of the task.
+After performing the steps above you can remove the comments in the `_viash.yaml` file.
 
 ### `common` submodule
 
