@@ -57,3 +57,6 @@ for ((i=0; i<nr_res; i++)); do
     dest_path=$(yq e ".info.test_resources[$i].dest" "$par_input")
     sync_s3 "$s3_path" "$dest_path"
   fi
+done
+
+cp -r resources_test/ "$par_output"
