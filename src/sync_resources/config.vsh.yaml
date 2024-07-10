@@ -31,11 +31,14 @@ test_resources:
     path: run_test.sh
 engines:
   - type: docker
-    image: "amazon/aws-cli:2.7.12"
+    image: "amazon/aws-cli:2.17.11"
     setup:
-      - type: apt
-        packages: yq-go
-
+      - type: yum
+        packages: [wget]
+      - type: docker
+        run : |
+          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && \
+          chmod +x /usr/bin/yq
 runners:
   - type: executable
   - type: nextflow

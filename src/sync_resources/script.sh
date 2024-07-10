@@ -30,4 +30,30 @@ fi
 # or https://github.com/aws/aws-cli/issues/5234#issuecomment-705831465
 export AWS_EC2_METADATA_DISABLED=true
 
-aws s3 sync "$par_input" "$par_output" --no-sign-request "${extra_params[@]}"
+
+function sync_s3() {
+  local s3_path="$1"
+  local dest_path="$2"
+    aws s3 sync \
+    "$s3_path" \
+    "$dest_path" \
+    --no-sign-request \
+    "${extra_params[@]}"
+}
+
+resources_detected=$(yq e '.info | has("test_resources")' "$par_input")
+if [ "$resources_detected" == "false" ]; then
+  echo "No test resources detected."
+  exit 0
+fi
+
+# reformat the test resources into a pseudo-json that can be read line-by-line by bash
+nr_res=$( yq e '.info.test_resources | length' "$par_input")
+
+for ((i=0; i<nr_res; i++)); do
+  type=$(yq e ".info.test_resources[$i].type" "$par_input")
+  if [ "$type" == "s3" ]; then
+    s3_path=$(yq e ".info.test_resources[$i].path" "$par_input")
+    dest_path=$(yq e ".info.test_resources[$i].dest" "$par_input")
+    sync_s3 "$s3_path" "$dest_path"
+  fi
