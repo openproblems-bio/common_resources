@@ -93,10 +93,10 @@ To create the data processor there is no template available. You can follow the 
 Be sure to update the `file_common_dataset.yaml` file with the correct information required for the methods/metrics.
 
 > [!IMPORTANT]
-> When using your own datasets please advise the Openproblems team on how to add these datasets to the s3 bucket.
+> When using your own datasets please advise the OpenProblems team on how to add these datasets to the s3 bucket.
 > As the dataset processor should make use of the `common` datasets folder in the `resources` or `resources_test` directory.
 
-To create the resources and test_resources for the task we will create a nextflow workflow that will process the datasets. This workflow will be created together with the Openproblems team.
+To create the resources and test_resources for the task we will create a nextflow workflow that will process the datasets. This workflow will be created together with the OpenProblems team.
 
 ## README
 
@@ -108,4 +108,4 @@ scripts/create_readme.sh
 
 ## Benchmarking ([docs](https://openproblems.bio/documentation/create_task/create_workflow))
 
-When you are finished with creating your components and dataset processor you can create a workflow to benchmark the components. This workflow will be created together with the Openproblems team.
+When you are finished with creating your components and dataset processor you can create a workflow to benchmark the components. This workflow will be created together with the OpenProblems team.
