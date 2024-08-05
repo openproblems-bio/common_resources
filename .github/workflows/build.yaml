@@ -71,8 +71,19 @@ jobs:
           version: ${{ steps.variables.outputs.version }}
       
       # Add step to copy files to .
+      - name: Copy executables to root
+        run: |
+          echo "Copying directories to root"
+          cp -r ${{ steps.build-target.outputs.target_dir }}/executable/common/* .
 
       # Add step to delete target dir and .github dir
+      - name: Clean up
+        run: |
+          echo "Cleaning up"
+          rm -rf ${{ steps.build-target.outputs.target_dir }}
+          rm -rf 
+          rm -rf .github
+      
       
       - name: Deploy to target branch
         uses: peaceiris/actions-gh-pages@v4
