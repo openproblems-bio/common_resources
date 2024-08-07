@@ -111,7 +111,7 @@ jobs:
   # phase 3
   cleanup:
     name: Clean up repository
-    needs: target
+    needs: [target, docker]
     
     runs-on: ubuntu-latest
     permissions:
@@ -130,8 +130,7 @@ jobs:
       - name: Copy executables to root
         run: |
           echo "Copying directories to root"
-          # cp -r target/executable/common/* .
-          ls -l
+          cp -r target/executable/common/* .
 
       # Add step to remove unnecessary files
       - name: Clean up
@@ -140,3 +139,9 @@ jobs:
           rm -rf target
           rm -rf src
           rm _viash.yaml
+        
+      - name: Commit changes
+        uses: devops-infra/action-commit-push@master
+        with:
+          commit_message: "Clean up repository"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
