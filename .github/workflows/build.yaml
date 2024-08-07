@@ -113,7 +113,8 @@ jobs:
       - name: Copy executables to root
         run: |
           echo "Copying directories to root"
-          cp -r target/executable/common/* .
+          # cp -r target/executable/common/* .
+          ls -l
 
       # Add step to remove unnecessary files
       - name: Clean up
