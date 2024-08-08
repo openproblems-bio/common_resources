@@ -18,7 +18,7 @@ assertthat::assert_that(file.exists(output_path))
 
 cat(">> Checking file contents\n")
 lines <- readLines(output_path)
-assertthat::assert_that(any(grepl("# Task Template ", lines)))
+assertthat::assert_that(any(grepl("# Template", lines)))
 assertthat::assert_that(any(grepl("# Description", lines)))
 assertthat::assert_that(any(grepl("# Motivation", lines)))
 assertthat::assert_that(any(grepl("# Authors", lines)))
