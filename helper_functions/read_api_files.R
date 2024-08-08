@@ -233,21 +233,10 @@ render_file <- function(spec) {
 }
 
 # path <- "src/tasks/denoising"
-read_task_api <- function(path) {
+read_api_files <- function(path) {
   cli::cli_inform("Looking for project root")
   project_path <- openproblems::find_project_root(path)
   api_dir <- paste0(path, "/api")
-
-  cli::cli_inform("Reading task info")
-  task_info_yaml <- list.files(api_dir, pattern = "task_info.ya?ml", full.names = TRUE)
-  assertthat::assert_that(length(task_info_yaml) == 1)
-  task_info <- openproblems::read_nested_yaml(task_info_yaml, project_path)
-
-  cli::cli_inform("Reading task authors")
-  authors <- map_df(task_info$authors, function(aut) {
-    aut$roles <- paste(aut$roles, collapse = ", ")
-    list_as_tibble(aut)
-  })
 
   cli::cli_inform("Reading component yamls")
   comp_yamls <- list.files(api_dir, pattern = "comp_.*\\.ya?ml", full.names = TRUE)
@@ -271,15 +260,13 @@ read_task_api <- function(path) {
   task_graph <- create_task_graph(file_info, comp_info, comp_args)
 
   list(
-    task_info = task_info,
     file_specs = files,
     file_info = file_info,
     file_slots = file_slots,
     comp_specs = comps,
     comp_info = comp_info,
     comp_args = comp_args,
-    task_graph = task_graph,
-    authors = authors
+    task_graph = task_graph
   )
 }
 
