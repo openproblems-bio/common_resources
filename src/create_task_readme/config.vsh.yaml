@@ -34,10 +34,6 @@ resources:
 test_resources:
   - type: r_script
     path: test.R
-  - path: /src
-    dest: openproblems-v2/src
-  - path: /_viash.yaml
-    dest: openproblems-v2/_viash.yaml
 engines:
   - type: docker
     image: ghcr.io/openproblems-bio/base_images/r:1.1.0
@@ -55,6 +51,12 @@ engines:
             curl -sL "$download_url" -o /opt/quarto.deb && \
             dpkg -i /opt/quarto.deb && \
             rm /opt/quarto.deb
+    test_setup:
+      - type: apt
+        packages: [git]
+      - type: docker
+        run: |
+          git clone https://github.com/openproblems-bio/task_template.git /task_template
 runners:
   - type: executable
   - type: nextflow
