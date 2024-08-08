@@ -10,7 +10,7 @@ cat(">> Running the script as test\n")
 system(paste(
   meta["executable"],
   "--output", output_path,
-  "--task_dir", "/src"
+  "--task_dir", "src"
 ))
 
 cat(">> Checking whether output files exist\n")
