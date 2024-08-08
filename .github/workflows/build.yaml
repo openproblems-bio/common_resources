@@ -4,7 +4,19 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-on: workflow_dispatch
+on:
+  push:
+    branches: [ 'main' ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: |
+          The version of the project to build. Example: `1.0.3`.
+          
+          If not provided, a development build with a version name
+          based on the branch name will be built. Otherwise, a release
+          build with the provided version will be built.
+        required: false
 
 jobs:
   # phase 1
@@ -52,14 +64,11 @@ jobs:
           echo "Set target branch to '$TARGET_BRANCH'"
           echo "target_branch=$TARGET_BRANCH" >> $GITHUB_OUTPUT
           
-
       - uses: viash-io/viash-actions/project/build-target@v6
         id: build-target
         with:
           target_branch: ${{ steps.variables.outputs.target_branch }}
           version: ${{ steps.variables.outputs.version }}
-      
-      
       
       - name: Deploy to target branch
         uses: peaceiris/actions-gh-pages@v4
@@ -126,13 +135,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.target.outputs.target_branch }}
-    # Add step to copy files to .
+
       - name: Copy executables to root
         run: |
           echo "Copying directories to root"
           cp -r target/executable/common/* .
 
-      # Add step to remove unnecessary files
       - name: Clean up
         run: |
           echo "Cleaning up"
