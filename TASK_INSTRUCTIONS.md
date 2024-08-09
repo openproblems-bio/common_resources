@@ -86,7 +86,7 @@ It is possible to customise the command in the above script by adding a `-q` arg
 
 ## Dataset processor ([docs](https://openproblems.bio/documentation/create_task/dataset_processor))
 
-The dataset processor is a script that removes all unnecessary info from the dataset for your task. This info is defined in the `api/file_common_dataset.yaml` file. From this filtered dataset several files are created that are used by the methods and metrics. Safeguarding data leaks and laking sure the structure of the data cannot be altered for a method or a metric.
+The dataset processor is a script that removes all unnecessary info from the dataset for your task. This info is defined in the `api/file_common_dataset.yaml` file. From this filtered dataset several files are created that are used by the methods and metrics. Safeguarding data leaks and making sure the structure of the data cannot be altered for a method or a metric.
 
 To create the data processor there is no template available. You can follow the guideline in the documentation. Store the processor in the `src/process_dataset` folder.
 
