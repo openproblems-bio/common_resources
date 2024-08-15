@@ -149,11 +149,12 @@ if "variants" in info:
 runners = config.get("runners", [])
 
 print("Check Nextflow runner", flush=True)
-nextflow_runners = [runner for runner in runners if runner["type"] == "nextflow"]
+nextflow_runner = next(
+    (runner for runner in runners if runner["type"] == "nextflow"),
+    None
+)
 
-assert nextflow_runners, ".runners does not contain a nextflow runner"
-
-nextflow_runner = nextflow_runners[0]
+assert nextflow_runner, ".runners does not contain a nextflow runner"
 assert nextflow_runner.get("directives"), "directives not a field in nextflow runner"
 nextflow_labels = nextflow_runner["directives"].get("label")
 assert nextflow_labels, "label not a field in nextflow runner directives"
