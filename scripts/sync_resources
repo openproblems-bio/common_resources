@@ -1,0 +1,30 @@
+#!/bin/bash
+
+repository="openproblems-bio/core"
+version="a73358804ba3d089a8343c60af65cc6fe7c18b98"
+component="sync_resources"
+
+cache_dir="$HOME/.cache/openproblems/repos/$repository"
+executable_path="viash/core/target/executable/${component}/$(basename ${component})"
+
+function get_repository {
+  if [ ! -d "$cache_dir" ]; then
+    mkdir -p "$cache_dir"
+    git clone https://github.com/${repository}.git "$cache_dir" > /dev/null
+  fi
+}
+
+function update_repository {
+  # orig_dir=$(pwd)
+  cd "$cache_dir"   
+  git fetch > /dev/null 2>&1
+  git checkout "$version" > /dev/null 2>&1
+  git pull > /dev/null 2>&1
+  # cd "$orig_dir"
+}
+
+get_repository
+update_repository
+
+# run the executable
+"${cache_dir}/${executable_path}" $@
