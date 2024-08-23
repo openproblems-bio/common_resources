@@ -1,7 +1,7 @@
 #!/bin/bash
 
 repository="openproblems-bio/core"
-version="a73358804ba3d089a8343c60af65cc6fe7c18b98"
+version="e760ba6f07080e6b691f1cf1d5e379c0038c6576"
 component="create_task_readme"
 
 cache_dir="$HOME/.cache/openproblems/repos/$repository"
@@ -15,12 +15,10 @@ function get_repository {
 }
 
 function update_repository {
-  # orig_dir=$(pwd)
-  cd "$cache_dir"   
-  git fetch > /dev/null 2>&1
-  git checkout "$version" > /dev/null 2>&1
-  git pull > /dev/null 2>&1
-  # cd "$orig_dir"
+  (cd "$cache_dir" && \
+    git fetch > /dev/null 2>&1 && \
+    git checkout "$version" > /dev/null 2>&1 && \
+    git pull > /dev/null 2>&1)
 }
 
 get_repository
