@@ -22,58 +22,46 @@ def read_config_slots_info(config_file, slot_mapping = {}):
         }
         ```
     """
-    import yaml
-    import re
+    import openproblems
 
     # read output spec from yaml
-    with open(config_file, "r") as object_name:
-        config = yaml.safe_load(object_name)
+    config = openproblems.project.read_viash_config(config_file)
 
     output_struct_slots = {}
 
-    for arg_grp in config["argument_groups"]:
-      if arg_grp.get("name") == "Arguments":
-          args = arg_grp["arguments"]
-
     # fetch info on which slots should be copied to which file
-    for arg in args:
+    for arg in config["all_arguments"]:
         # argument is an output file with a slot specification
-        if arg["direction"] == "output" and arg.get("info", {}).get("slots"):
-            object_name = re.sub("--", "", arg["name"])
-            
-            struct_slots = arg['info']['slots']
-            out = {}
-            for (struct, slots) in struct_slots.items():
-                out_struct = {}
-                for slot in slots:
-                    # if slot_mapping[struct][slot['name']] exists, use that as the source slot name
-                    # otherwise use slot['name']
-                    source_slot = slot_mapping.get(struct, {}).get(slot["name"], slot["name"])
-                    out_struct[slot["name"]] = source_slot
-                out[struct] = out_struct
-
-            output_struct_slots[object_name] = out
+        arg_info = arg.get("info") or {}
+        arg_format = arg_info.get("format") or {}
+        if arg["type"] == "file" and arg_format:
+            # just in case it's missing
+            assert arg_format.get("type"), f"Missing type in .info.format for {arg['name']}"
+            output_struct_slots[arg["clean_name"]] = arg_format
 
     return output_struct_slots
 
 # create new anndata objects according to api spec
-def subset_anndata(adata, slot_info):
+def subset_anndata(adata, format):
     """Create new anndata object according to slot info specifications.
     
     Arguments:
     adata -- An AnnData object to subset (required)
-    slot_info -- Which slots to retain, typically one of the items in the output of read_config_slots_info.
+    format -- Which slots to retain, typically one of the items in the output of read_config_slots_info.
       Must be a dictionary whose keys are the names of the AnnData structs, and values is another 
       dictionary with destination value names as keys and source value names as values. 
       """
     import pandas as pd
     import anndata as ad
 
+    assert isinstance(adata, ad.AnnData), "adata must be an AnnData object"
+    assert format.get("type") == "h5ad", "format must be a h5ad type"
+
     structs = ["layers", "obs", "var", "uns", "obsp", "obsm", "varp", "varm"]
     kwargs = {}
 
     for struct in structs:
-        slot_mapping = slot_info.get(struct, {})
+        slot_mapping = format.get(struct, {})
         data = {dest : getattr(adata, struct)[src] for (dest, src) in slot_mapping.items()}
         if len(data) > 0:
             if struct in ['obs', 'var']:
