@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openproblems.bio/schemas/authors_schema.json",
+  "$id": "https://openproblems.bio/schemas/results_v4/authors.json",
   "title": "Associated authors",
   "type": "array",
   "items": {

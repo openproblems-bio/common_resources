@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openproblems.bio/schemas/method_info_schema.json",
+  "$id": "https://openproblems.bio/schemas/results_v4/method_info.json",
   "title": "Method info",
   "description": "Information about methods in a task",
   "type": "array",
@@ -49,10 +49,10 @@
         "type": "string"
       },
       "authors": {
-        "$ref": "https://openproblems.bio/schemas/authors_schema.json"
+        "$ref": "https://openproblems.bio/schemas/results_v4/authors.json"
       },
       "references": {
-        "$ref": "https://openproblems.bio/schemas/references_schema.json"
+        "$ref": "https://openproblems.bio/schemas/results_v4/references.json"
       },
       "additional_info": {
         "description": "Additional information from the method config",

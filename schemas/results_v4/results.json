@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openproblems.bio/schemas/results_schema.json",
+  "$id": "https://openproblems.bio/schemas/results_v4/results.json",
   "title": "Results",
   "description": "Results for a task",
   "type": "array",

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openproblems.bio/schemas/task_info_schema.json",
+  "$id": "https://openproblems.bio/schemas/results_v4/task_info.json",
   "title": "Task info",
   "description": "Information about a task",
   "type": "object",
@@ -30,14 +30,14 @@
       "type": "string"
     },
     "authors": {
-      "$ref": "https://openproblems.bio/schemas/authors_schema.json"
+      "$ref": "https://openproblems.bio/schemas/results_v4/authors.json"
     },
     "license": {
       "description": "License for the task",
       "type": "string"
     },
     "references": {
-      "$ref": "https://openproblems.bio/schemas/references_schema.json"
+      "$ref": "https://openproblems.bio/schemas/results_v4/references.json"
     },
     "version": {
       "description": "Tag for this version of the task",

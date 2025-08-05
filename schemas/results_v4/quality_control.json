@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openproblems.bio/schemas/quality_control_schema.json",
+  "$id": "https://openproblems.bio/schemas/results_v4/quality_control.json",
   "title": "Quality control",
   "description": "Quality control information for a task",
   "type": "array",

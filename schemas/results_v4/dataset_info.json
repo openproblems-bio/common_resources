@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openproblems.bio/schemas/dataset_info_schema.json",
+  "$id": "https://openproblems.bio/schemas/results_v4/dataset_info.json",
   "title": "Method info",
   "description": "Information about datasets in a task",
   "type": "array",
@@ -53,10 +53,10 @@
         }
       },
       "authors": {
-        "$ref": "https://openproblems.bio/schemas/authors_schema.json"
+        "$ref": "https://openproblems.bio/schemas/results_v4/authors.json"
       },
       "references": {
-        "$ref": "https://openproblems.bio/schemas/references_schema.json"
+        "$ref": "https://openproblems.bio/schemas/results_v4/references.json"
       },
       "date_created": {
         "description": "Date when the dataset was created",
