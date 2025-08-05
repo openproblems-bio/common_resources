@@ -44,10 +44,10 @@
         "type": "string"
       },
       "authors": {
-        "$ref": "https://openproblems.bio/schemas/results_v4/authors.json"
+        "$ref": "https://openproblems.bio/schemas/results_v4/core.json#/$defs/authors"
       },
       "references": {
-        "$ref": "https://openproblems.bio/schemas/results_v4/references.json"
+        "$ref": "https://openproblems.bio/schemas/results_v4/core.json#/$defs/references"
       },
       "additional_info": {
         "description": "Additional information from the metric config",

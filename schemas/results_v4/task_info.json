@@ -30,14 +30,14 @@
       "type": "string"
     },
     "authors": {
-      "$ref": "https://openproblems.bio/schemas/results_v4/authors.json"
+      "$ref": "https://openproblems.bio/schemas/results_v4/core.json#/$defs/authors"
     },
     "license": {
       "description": "License for the task",
       "type": "string"
     },
     "references": {
-      "$ref": "https://openproblems.bio/schemas/results_v4/references.json"
+      "$ref": "https://openproblems.bio/schemas/results_v4/core.json#/$defs/references"
     },
     "version": {
       "description": "Tag for this version of the task",
