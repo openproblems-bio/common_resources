@@ -38,7 +38,7 @@
       },
       "description": "List of authors"
     },
-    "reference": {
+    "references": {
       "description": "Bibliography entries",
       "type": "object",
       "properties": {
@@ -58,13 +58,6 @@
         }
       },
       "required": ["doi", "bibtex"]
-    },
-    "references": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/reference"
-      },
-      "description": "List of references"
     }
   }
 }
