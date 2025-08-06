@@ -34,6 +34,8 @@ class Argument:
   type: str
   name: str
   clean_name: str
+  label: Optional[str] = None
+  summary: Optional[str] = None
   description: Optional[str] = None
   info: Optional[dict] = None
   default: Optional[any] = None
