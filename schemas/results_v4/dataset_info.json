@@ -60,11 +60,11 @@
       },
       "date_created": {
         "description": "Date when the dataset was created",
-        "type": "string"
+        "type": ["null", "string"]
       },
       "file_size_mb": {
         "description": "Size of the dataset in MB",
-        "type": "number"
+        "type": ["null", "number"]
       }
     },
     "required": [
