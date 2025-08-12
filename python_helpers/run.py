@@ -1,7 +1,7 @@
 """
 This module contains the run function to run an executable.
 
-When adding this file as a resource to a component, you can build the 
+When adding this file as a resource to a component, you can build the
 target directory as a Python package. This will allow you to import the
 run function in a script to run the executable.
 
@@ -117,7 +117,7 @@ def __process_argument(argument: dict) -> dict:
 
       if isinstance(example, list):
         example = example[0]
-      
+
       example_basename = os.path.basename(example)
       example_ext = os.path.splitext(example_basename)[1]
       is_mult = "_*" if argument.get("multiple", False) else ""
@@ -134,11 +134,11 @@ def __check_type_of_argument_value(value: any, argument: Argument, temp_dir: Pat
 
   This function will check if the value is of the correct type and convert it
   if necessary. It will raise an error if the type is incorrect.
-  
+
   Args:
     argument: The argument to check the type of.
     value: The value to check.
-  
+
   Returns:
     The converted value.
   """
@@ -174,7 +174,7 @@ def __check_type_of_argument_value(value: any, argument: Argument, temp_dir: Pat
     if not isinstance(value, bool):
       raise ValueError(f"Argument {argument.clean_name} must be of type bool")
   return value
-    
+
 
 def __get_argument_value(argument: Argument, arg_values: dict, temp_dir: Path) -> Optional[List[any]]:
   """
@@ -193,7 +193,7 @@ def __get_argument_value(argument: Argument, arg_values: dict, temp_dir: Path) -
   """
   if argument.required and argument.clean_name not in arg_values:
     raise ValueError(f"Missing required argument: {argument.clean_name}")
-  
+
   value = arg_values.get(argument.clean_name)
 
   # if the value is None, we can skip the rest of the checks
@@ -209,7 +209,7 @@ def __get_argument_value(argument: Argument, arg_values: dict, temp_dir: Path) -
   # check if the argument is a multiple argument
   if not argument.multiple and len(value) > 1:
     raise ValueError(f"Argument {argument.clean_name} does not accept multiple values")
-  
+
   if argument.multiple:
     # todo: fix when https://github.com/viash-io/viash/issues/749 is implemented
     if argument.type == "boolean_true" or argument.type == "boolean_false":
@@ -238,7 +238,7 @@ def __argument_value_to_flag(value: Optional[List[any]], argument: Argument) -> 
 
   if argument.type == "boolean_true":
     return [argument.name] if value[0] else []
-  
+
   if argument.type == "boolean_false":
     return [] if value[0] else [argument.name]
 
@@ -249,7 +249,7 @@ def __argument_value_to_flag(value: Optional[List[any]], argument: Argument) -> 
     if val:
       out.append(argument.name)
       out.append(str(val))
-  
+
   return out
 
 def __process_output_item(path: str, argument: Argument) -> Union[Path, ad.AnnData]:
@@ -272,7 +272,7 @@ def __process_output_value(output_path: str, argument: Argument) -> Optional[Uni
   Args:
     output_path: The output path to process.
     argument: The argument that the output path belongs to.
-  
+
   Returns:
     The path(s) or None if the path does not exist.
   """
@@ -280,7 +280,7 @@ def __process_output_value(output_path: str, argument: Argument) -> Optional[Uni
     value = glob.glob(output_path)
   else:
     value = [output_path] if os.path.exists(output_path) else []
-  
+
   if argument.required and argument.must_exist and len(value) == 0:
     s = "s" if argument.multiple else ""
     raise FileNotFoundError(f"Output{s} for argument {argument.clean_name} not found at '{output_path}'")
@@ -347,8 +347,9 @@ def __run(arg_values: dict, config: dict, publish_dir: Path, verbose: bool = Fal
       for argument in config["all_arguments"]
       if argument.type == "file" and argument.direction == "output"
     }
-    
+
     return resolved_outputs
+
   finally:
     if created_temp_dir:
       # remove the temporary directory
@@ -390,13 +391,13 @@ def __generate_function_argument_signature(argument: Argument, direction_input: 
     base = "bool"
   else:
     raise ValueError(f"Unknown argument type: {argument.type}")
-  
+
   if argument.multiple:
     base = f"List[{base}]"
-  
+
   if not argument.required:
     base = f"Optional[{base}]"
-  
+
   signature = f"{argument.clean_name}: {base}"
 
   if direction_input:
@@ -453,11 +454,13 @@ def __generate_output_dataclass(config: dict) -> str:
     if arg.direction == "output"
   ]
 
+  body = "\n  ".join(outputs)
+
   return __strip_margin(
     f"""\
     |@dataclass
     |class Output:
-    |  {'\n  '.join(outputs)}
+    |  {body}
     |"""
   )
 
@@ -514,13 +517,13 @@ def __generate_function_code(config: dict) -> str:
   # generate help
   help = __generate_help(config)
   help_lines = help.split("\n")
-
+  help_block = "\n  ".join(help_lines)
 
   return __strip_margin(
     f"""\
     |def run({', '.join(inputs)}) -> Output:
     |  '''
-    |  {'\n  '.join(help_lines)}
+    |  {help_block}
     |  '''
     |  inputs_dict = locals()
     |  publish_dir = inputs_dict.pop('publish_dir')
