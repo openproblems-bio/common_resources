@@ -294,7 +294,7 @@ def __process_output_value(output_path: str, argument: Argument) -> Optional[Uni
   else:
     return paths[0] if len(paths) > 0 else None
 
-def __run(arg_values: dict, config: dict, publish_dir: Path, verbose: bool = False, _temp_dir: Optional[Path] = None) -> dict:
+def __run(arg_values: dict, config: dict, output_dir: Path, temp_dir: Path, verbose: bool = False, engine: Optional[str] = None) -> dict:
   """
   Run the executable with the provided arguments.
 
@@ -304,7 +304,9 @@ def __run(arg_values: dict, config: dict, publish_dir: Path, verbose: bool = Fal
   Args:
     arg_values: The argument values to use.
     config: The parsed Viash config.
-    publish_dir: The directory to publish the output files to.
+    output_dir: The directory to publish the output files to.
+    temp_dir: The temporary directory to use.
+    verbose: Whether to print verbose output.
 
   Returns:
     The resolved output paths.
@@ -313,47 +315,39 @@ def __run(arg_values: dict, config: dict, publish_dir: Path, verbose: bool = Fal
   outputs = {}
 
   # create publish directory if it doesn't exist
-  if not os.path.exists(publish_dir):
-    os.makedirs(publish_dir)
-  if _temp_dir is None:
-    _temp_dir = tempfile.mkdtemp()
-    created_temp_dir = _temp_dir is None
-    if created_temp_dir:
-      _temp_dir = Path(tempfile.mkdtemp())
+  if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
 
-  try:
-    for argument in config["all_arguments"]:
-      value = __get_argument_value(argument, arg_values, _temp_dir)
-      if verbose:
-        print(f"Argument {argument.clean_name}: {value}", flush=True)
-
-      if value is not None:
-        # use publish dir to write output files to based on the provided template
-        if argument.type == "file" and argument.direction == "output":
-          value = [os.path.join(publish_dir, v) for v in value]
-          outputs[argument.clean_name] = value[0] # should always be a single file
-
-        cmd.extend(__argument_value_to_flag(value, argument))
-
-    # run the command
+  for argument in config["all_arguments"]:
+    value = __get_argument_value(argument, arg_values, temp_dir)
     if verbose:
-      print(f"Running command: {' '.join(cmd)}", flush=True)
-    out = subprocess.run(cmd)
+      print(f"Argument {argument.clean_name}: {value}", flush=True)
 
-    assert out.returncode == 0, f"Command failed with return code {out.returncode}"
+    if value is not None:
+      # use output dir to write output files to based on the provided template
+      if argument.type == "file" and argument.direction == "output":
+        value = [os.path.join(output_dir, v) for v in value]
+        outputs[argument.clean_name] = value[0] # should always be a single file
 
-    resolved_outputs = {
-      argument.clean_name: __process_output_value(outputs[argument.clean_name], argument)
-      for argument in config["all_arguments"]
-      if argument.type == "file" and argument.direction == "output"
-    }
+      cmd.extend(__argument_value_to_flag(value, argument))
+  
+  if engine is not None:
+    cmd.extend(["---engine", engine])
 
-    return resolved_outputs
+  # run the command
+  if verbose:
+    print(f"Running command: {' '.join(cmd)}", flush=True)
+  out = subprocess.run(cmd)
 
-  finally:
-    if created_temp_dir:
-      # remove the temporary directory
-      shutil.rmtree(_temp_dir, ignore_errors=True)
+  assert out.returncode == 0, f"Command failed with return code {out.returncode}"
+
+  resolved_outputs = {
+    argument.clean_name: __process_output_value(outputs[argument.clean_name], argument)
+    for argument in config["all_arguments"]
+    if argument.type == "file" and argument.direction == "output"
+  }
+
+  return resolved_outputs
 
 def __generate_function_argument_signature(argument: Argument, direction_input: bool = True) -> str:
   """
@@ -374,20 +368,14 @@ def __generate_function_argument_signature(argument: Argument, direction_input: 
     base = "str"
   elif argument.type == "file":
     if argument.direction == "input" or not direction_input:
-      base = "Path"
+      base = "Union[str, Path, ad.AnnData]"
     else:
-      base = "str"
-  elif argument.type == "integer":
-    base = "int"
-  elif argument.type == "long":
+      base = "Union[Path, ad.AnnData]"
+  elif argument.type in ["integer", "long"]:
     base = "int"
   elif argument.type == "double":
     base = "float"
-  elif argument.type == "boolean_true":
-    base = "bool"
-  elif argument.type == "boolean_false":
-    base = "bool"
-  elif argument.type == "boolean":
+  elif argument.type in ["boolean", "boolean_false", "boolean_true"]:
     base = "bool"
   else:
     raise ValueError(f"Unknown argument type: {argument.type}")
@@ -464,6 +452,9 @@ def __generate_output_dataclass(config: dict) -> str:
     |"""
   )
 
+# TODO: it would be better if we regenerated the help manually to make it more user-friendly
+# See https://github.com/viash-io/viash/blob/0587552f51d3bb3c964e5b6e19846e44020431dc/src/main/scala/io/viash/helpers/Helper.scala#L34
+# for the Scala implementation
 def __generate_help(config: dict) -> str:
   cmd = [config["build_info"]["executable"], "--help"]
 
@@ -498,21 +489,10 @@ def __generate_function_code(config: dict) -> str:
   # since the user can pass a template for the output file
   # that needs to be generated in the publish directory
 
-  # get the signature of inputs without defaults
-  inputs_no_defaults = [
+  inputs_signatures = [
     __generate_function_argument_signature(arg, direction_input=True)
     for arg in input_arguments
-    if arg.default is None and arg.required
   ]
-  # get the signature of inputs with defaults
-  inputs_with_defaults = [
-    __generate_function_argument_signature(arg, direction_input=True)
-    for arg in input_arguments
-    if not (arg.default is None and arg.required)
-  ]
-
-  # signature of the combined inputs
-  inputs = inputs_no_defaults + [f"publish_dir: Path"] + inputs_with_defaults
 
   # generate help
   help = __generate_help(config)
@@ -521,14 +501,31 @@ def __generate_function_code(config: dict) -> str:
 
   return __strip_margin(
     f"""\
-    |def run({', '.join(inputs)}) -> Output:
+    |def run({', '.join(inputs_signatures)}, _output_dir: Optional[Path] = None, _temp_dir: Optional[Path] = None, _engine: Optional[str] = None) -> Output:
     |  '''
     |  {help_block}
     |  '''
     |  inputs_dict = locals()
-    |  publish_dir = inputs_dict.pop('publish_dir')
-    |  output_dict = __run(inputs_dict, config=__config, publish_dir=publish_dir)
-    |  return Output(**output_dict)
+    |  output_dir = inputs_dict.pop('_output_dir')
+    |  temp_dir = inputs_dict.pop('_temp_dir')
+    |  engine = inputs_dict.pop('_engine')
+    |
+    |  created_temp_dir = temp_dir is None
+    |  try:
+    |    if created_temp_dir:
+    |      temp_dir = Path(tempfile.mkdtemp())
+    |    if output_dir is None:
+    |      print(f"Using temporary output directory: {{output_dir}}", flush=True)
+    |      output_dir = Path(tempfile.mkdtemp())
+    |    # create dir if it does not exist
+    |    temp_dir.mkdir(parents=True, exist_ok=True)
+    |    output_dir.mkdir(parents=True, exist_ok=True)
+    |    output_dict = __run(inputs_dict, config=__config, output_dir=output_dir, temp_dir=temp_dir, engine=engine)
+    |    return Output(**output_dict)
+    |  finally:
+    |    if created_temp_dir:
+    |      # remove the temporary directory
+    |      shutil.rmtree(temp_dir, ignore_errors=True)
     |"""
   )
 
@@ -538,7 +535,19 @@ exec(__generate_output_dataclass(__config))
 exec(__generate_function_code(__config))
 
 # # for debugging
-# __dir = "viash_components/executable/differential_expression/deseq2"
+# __dir = "target/executable/metrics/pcr"
 # __config = __read_config(__dir)
 # print(__generate_output_dataclass(__config))
 # print(__generate_function_code(__config))
+#
+# # or:
+# # viash ns build --parallel
+# # pip install .
+# from task_batch_integration.metrics.pcr import run
+# import anndata as ad
+# from pathlib import Path
+# run(input_integrated=ad.AnnData(), input_solution=ad.AnnData(), _output_dir=Path("out"), _temp_dir=Path("tmp"))
+
+__all__ = [
+  "run"
+]
