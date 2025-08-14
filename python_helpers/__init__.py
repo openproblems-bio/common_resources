@@ -287,7 +287,7 @@ def __process_output_value(output_path: str, argument: Argument) -> Optional[Uni
 
   # convert types
   if argument.type == "file" and argument.direction == "output":
-    paths = [__process_output_item(v) for v in value]
+    paths = [__process_output_item(v, argument) for v in value]
 
   if argument.multiple:
     return paths
