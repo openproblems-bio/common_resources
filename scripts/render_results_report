@@ -110,11 +110,20 @@ run_aws_s3() {
             log "No AWS credentials found, relying on --no-sign-request flag"
         fi
         
+        # Suppress Docker's stderr output to avoid mixing with command output
         docker run --rm \
             $aws_mount \
             -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-us-east-1}" \
             amazon/aws-cli:latest \
-            s3 "$@"
+            s3 "$@" 2>/dev/null || {
+                # If the command fails, run it again with stderr visible for debugging
+                echo "AWS CLI command failed, running with error output:" >&2
+                docker run --rm \
+                    $aws_mount \
+                    -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-us-east-1}" \
+                    amazon/aws-cli:latest \
+                    s3 "$@"
+            }
     fi
 }
 
@@ -154,28 +163,70 @@ list_s3_runs() {
 # Function to select run interactively
 select_run() {
     local base_dir="$1"
+    
+    echo "Fetching available runs..." >&2
+    
+    # Capture runs with proper error handling
+    local temp_file
+    temp_file=$(mktemp)
+    if ! list_s3_runs "$base_dir" > "$temp_file" 2>&1; then
+        echo "Error: Failed to fetch runs from $base_dir" >&2
+        rm -f "$temp_file"
+        exit 1
+    fi
+    
     local runs
-    readarray -t runs < <(list_s3_runs "$base_dir")
+    readarray -t runs < "$temp_file"
+    rm -f "$temp_file"
     
     if [[ ${#runs[@]} -eq 0 ]]; then
         echo "Error: No runs found in $base_dir" >&2
         exit 1
     fi
     
-    echo "Available runs:"
-    for i in "${!runs[@]}"; do
-        echo "$((i+1)). ${runs[i]}"
-    done
-    
-    while true; do
-        read -p "Select a run (1-${#runs[@]}): " selection
-        if [[ "$selection" =~ ^[0-9]+$ ]] && [[ "$selection" -ge 1 ]] && [[ "$selection" -le ${#runs[@]} ]]; then
-            echo "${runs[$((selection-1))]}"
-            break
-        else
-            echo "Invalid selection. Please enter a number between 1 and ${#runs[@]}."
-        fi
-    done
+    # Check if we're in an interactive terminal
+    if [[ -t 0 ]] && command -v select >/dev/null 2>&1; then
+        # Use bash's built-in select for a better user experience
+        echo >&2  # Empty line for clarity
+        PS3="Select a run (1-${#runs[@]}) or 'q' to quit: "
+        
+        select run_date in "${runs[@]}" "Quit"; do
+            case "$run_date" in
+                "Quit")
+                    echo "Selection cancelled." >&2
+                    return 1
+                    ;;
+                "")
+                    echo "Invalid selection. Please enter a number between 1 and ${#runs[@]}, or 'q' to quit." >&2
+                    ;;
+                *)
+                    echo "$run_date"
+                    return 0
+                    ;;
+            esac
+        done
+    else
+        # Fallback for non-interactive or systems without select
+        echo "Available runs:" >&2
+        for i in "${!runs[@]}"; do
+            echo "$((i+1)). ${runs[i]}" >&2
+        done
+        echo >&2  # Empty line for clarity
+        
+        while true; do
+            read -p "Select a run (1-${#runs[@]}) or 'q' to quit: " selection >&2
+            
+            if [[ "$selection" == "q" || "$selection" == "Q" ]]; then
+                echo "Selection cancelled." >&2
+                return 1
+            elif [[ "$selection" =~ ^[0-9]+$ ]] && [[ "$selection" -ge 1 ]] && [[ "$selection" -le ${#runs[@]} ]]; then
+                echo "${runs[$((selection-1))]}"
+                return 0
+            else
+                echo "Invalid selection. Please enter a number between 1 and ${#runs[@]}, or 'q' to quit." >&2
+            fi
+        done
+    fi
 }
 
 # Function to validate input directory/path
@@ -350,10 +401,14 @@ case "$MODE" in
         ;;
     
     "select")
-        DATE=$(select_run "$S3_TASK_BASE")
-        INPUT_DIR="$S3_TASK_BASE/run_$DATE"
-        RUN_ID="$TASK/run_$DATE"
-        run_pipeline "$INPUT_DIR" "$OUTPUT_DIR" "$TASK" "$RUN_ID"
+        if DATE=$(select_run "$S3_TASK_BASE"); then
+            INPUT_DIR="$S3_TASK_BASE/run_$DATE"
+            RUN_ID="$TASK/run_$DATE"
+            run_pipeline "$INPUT_DIR" "$OUTPUT_DIR" "$TASK" "$RUN_ID"
+        else
+            echo "Operation cancelled by user." >&2
+            exit 0
+        fi
         ;;
 esac
 
