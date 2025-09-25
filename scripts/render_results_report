@@ -188,7 +188,7 @@ select_run() {
     if [[ -t 0 ]] && command -v select >/dev/null 2>&1; then
         # Use bash's built-in select for a better user experience
         echo >&2  # Empty line for clarity
-        PS3="Select a run (1-${#runs[@]}) or 'q' to quit: "
+        PS3="Select a run (1-$((${#runs[@]}+1))): "
         
         select run_date in "${runs[@]}" "Quit"; do
             case "$run_date" in
@@ -197,7 +197,7 @@ select_run() {
                     return 1
                     ;;
                 "")
-                    echo "Invalid selection. Please enter a number between 1 and ${#runs[@]}, or 'q' to quit." >&2
+                    echo "Invalid selection. Please enter a number between 1 and $((${#runs[@]}+1))." >&2
                     ;;
                 *)
                     echo "$run_date"
