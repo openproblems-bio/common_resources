@@ -54,7 +54,8 @@ def check_format(arg):
                 df = pd.read_parquet(arg["value"])
             print(f"  {df}")
 
-            check_df_columns(df, arg)
+            arg_columns = arg_format.get("columns") or arg_info.get("columns") or []
+            check_dataframe(df, arg_columns, f"File '{arg['value']}'") 
         
         # Hierarchical data
         elif file_type == "json":
@@ -65,7 +66,7 @@ def check_format(arg):
                 data = json.load(f)
             print(f"  {type(data).__name__} with {len(data)} entries" if isinstance(data, (dict, list)) else f"  {data}")
 
-            check_dict_keys(data, arg)
+            check_dictionary(data, arg)
         elif file_type == "yaml":
             import yaml
             print(f"Reading and checking {arg['clean_name']}", flush=True)
@@ -74,7 +75,7 @@ def check_format(arg):
                 data = yaml.safe_load(f)
             print(f"  {type(data).__name__} with {len(data)} entries" if isinstance(data, (dict, list)) else f"  {data}")
 
-            check_dict_keys(data, arg)
+            check_dictionary(data, arg)
         
         # AnnData/SpatialData
         elif file_type in ["h5ad", "anndata_hdf5"]:
@@ -85,7 +86,7 @@ def check_format(arg):
 
             print(f"  {adata}")
 
-            check_h5ad_slots(adata, arg)
+            check_anndata(adata, arg_format, f"File '{arg['value']}'") 
         elif file_type == "anndata_zarr":
             import anndata as ad
             print(f"Reading and checking {arg['clean_name']}", flush=True)
@@ -93,7 +94,7 @@ def check_format(arg):
             store = ad.read_zarr(arg["value"])
             print(f"  {store}")
 
-            check_h5ad_slots(store, arg)
+            check_anndata(store, arg_format, f"File '{arg['value']}'") 
         elif file_type == "spatialdata_zarr":
             import spatialdata
             print(f"Reading and checking {arg['clean_name']}", flush=True)
@@ -101,18 +102,16 @@ def check_format(arg):
             sdata = spatialdata.read_zarr(arg["value"])
             print(f"  {sdata}")
 
-            check_spatialdata_elements(sdata, arg)
+            check_spatialdata(sdata, arg)
 
 
-def check_h5ad_slots(adata, arg):
-    """Check whether an AnnData file contains all for the required
-    slots in the corresponding .info.format field.
+def check_anndata(adata, format_spec, label=""):
+    """Check whether an AnnData object contains all required slots
+    defined in the given format spec dict.
     """
-    arg_info = arg.get("info") or {}
-    arg_format = arg_info.get("format") or arg_info.get("slots") or {}
-    for struc_name, items in arg_format.items():
-        # skip the type field
-        if struc_name == "type":
+    for struc_name, items in format_spec.items():
+        # skip metadata fields that are not AnnData slots
+        if not hasattr(adata, struc_name):
             continue
 
         struc_x = getattr(adata, struc_name)
@@ -120,27 +119,24 @@ def check_h5ad_slots(adata, arg):
         if struc_name == "X":
             if items.get("required", True):
                 assert struc_x is not None,\
-                    f"File '{arg['value']}' is missing slot .{struc_name}"
+                    f"{label} is missing slot .{struc_name}"
         
         else:
             for item in items:
                 if item.get("required", True):
                     assert item["name"] in struc_x,\
-                        f"File '{arg['value']}' is missing slot .{struc_name}['{item['name']}']"
+                        f"{label} is missing slot .{struc_name}['{item['name']}']" 
 
-def check_df_columns(df, arg):
-    """Check whether a DataFrame contains all for the required
-    columns in the corresponding .info.columns field.
+def check_dataframe(df, columns, label=""):
+    """Check whether a DataFrame contains all required columns
+    defined in the given columns spec list.
     """
-    arg_info = arg.get("info") or {}
-    arg_format = arg_info.get("format", {})
-    arg_columns = arg_format.get("columns") or arg_info.get("columns") or []
-    for item in arg_columns:
+    for item in columns:
         if item.get("required", True):
             assert item['name'] in df.columns,\
-                f"File '{arg['value']}' is missing column '{item['name']}'"
+                f"{label} is missing column '{item['name']}'"
 
-def check_dict_keys(data, arg):
+def check_dictionary(data, arg):
     """Check whether a JSON/YAML object contains all required top-level keys
     in the corresponding .info.format.keys field.
     """
@@ -152,7 +148,7 @@ def check_dict_keys(data, arg):
             assert isinstance(data, dict) and item["name"] in data,\
                 f"File '{arg['value']}' is missing key '{item['name']}'"
 
-def check_spatialdata_elements(sdata, arg):
+def check_spatialdata(sdata, arg):
     """Check whether a SpatialData object contains all required elements
     in the corresponding .info.format field. Supported element categories:
     images, labels, points, shapes, tables.
@@ -166,7 +162,20 @@ def check_spatialdata_elements(sdata, arg):
         for item in items:
             if item.get("required", True):
                 assert item["name"] in category_store,\
-                    f"File '{arg['value']}' is missing spatialdata element '{item['name']}' in '{category}'"
+                    f"File '{arg['value']}' is missing {category}['{item['name']}']"
+            
+            elem_name = item["name"]
+            if elem_name not in category_store:
+                continue
+            element = category_store[elem_name]
+
+            # Check columns for points and shapes (DataFrame-like)
+            if category in ["points", "shapes"]:
+                check_dataframe(element, item.get("columns") or [], f"File '{arg['value']}' {category}['{elem_name}']")
+
+            # Check obs/var slots for tables (AnnData-like)
+            elif category == "tables":
+                check_anndata(element, item, f"File '{arg['value']}' tables['{elem_name}']")
 
 def get_argument_sets(config):
     import re
