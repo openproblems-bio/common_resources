@@ -263,7 +263,16 @@ infer_timestamp() {
     local input_dir="$1"
     local date_str="$2"
 
+    # Compact format: YYYYMMDD or YYYYMMDD_HHMMSS
     if [[ "$date_str" =~ ^([0-9]{4})([0-9]{2})([0-9]{2})(_([0-9]{2})([0-9]{2})([0-9]{2}))?$ ]]; then
+        local y="${BASH_REMATCH[1]}" mo="${BASH_REMATCH[2]}" d="${BASH_REMATCH[3]}"
+        local h="${BASH_REMATCH[5]:-00}" mi="${BASH_REMATCH[6]:-00}" s="${BASH_REMATCH[7]:-00}"
+        echo "${y}-${mo}-${d}T${h}:${mi}:${s}Z"
+        return 0
+    fi
+
+    # Dashed format: YYYY-MM-DD or YYYY-MM-DD_HH-MM-SS
+    if [[ "$date_str" =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2})(_([0-9]{2})-([0-9]{2})-([0-9]{2}))?$ ]]; then
         local y="${BASH_REMATCH[1]}" mo="${BASH_REMATCH[2]}" d="${BASH_REMATCH[3]}"
         local h="${BASH_REMATCH[5]:-00}" mi="${BASH_REMATCH[6]:-00}" s="${BASH_REMATCH[7]:-00}"
         echo "${y}-${mo}-${d}T${h}:${mi}:${s}Z"
@@ -416,8 +425,9 @@ case "$MODE" in
 
     "s3")
         validate_input "$INPUT_PATH" "s3"
-        # Extract run date from S3 path if possible
-        if [[ "$INPUT_PATH" =~ run_([0-9]+) ]]; then
+        # Extract run date from S3 path if possible (e.g. run_20241010 or
+        # run_2025-01-23_18-03-16)
+        if [[ "$INPUT_PATH" =~ run_([0-9][-_0-9]*[0-9]) ]]; then
             DATE="${BASH_REMATCH[1]}"
             RUN_ID="$TASK/run_$DATE"
         else
