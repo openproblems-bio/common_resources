@@ -87,3 +87,34 @@ Boolean checkMethodAllowed(String compName, String paramsetName, List include, L
   }
   return true
 }
+
+// --- resources of a task ------------------------------------------------------
+// Nextflow writes the resources a task used to `.command.trace` in its work
+// directory, if the trace is enabled. the work directory is found from a file
+// the task created, so this also works for a task that was cached.
+
+// read the resources used by the task that created `path`, in the quantities
+// and units of the `run_*` fields in the results. null if there is no trace.
+Map readTaskResources(Path path) {
+  def dir = path.parent
+  while (dir != null && !dir.resolve(".command.run").exists()) {
+    dir = dir.parent
+  }
+  def trace_file = dir?.resolve(".command.trace")
+  if (trace_file == null || !trace_file.exists()) {
+    return null
+  }
+  def trace = trace_file.readLines()
+    .findAll { it.contains("=") }
+    .collectEntries { it.split("=", 2) as List }
+  def scaled = { String field, double divisor ->
+    trace[field] ? (trace[field] as double) / divisor : null
+  }
+  [
+    duration_secs: scaled("realtime", 1000),
+    cpu_pct: scaled("%cpu", 10),
+    peak_memory_mb: scaled("peak_vmem", 1024),
+    disk_read_mb: scaled("rchar", 1024 * 1024),
+    disk_write_mb: scaled("wchar", 1024 * 1024)
+  ]
+}

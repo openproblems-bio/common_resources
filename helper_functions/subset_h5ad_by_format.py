@@ -38,7 +38,7 @@ def subset_h5ad_by_format(adata, config, arg_name, field_rename_dict = {}):
 
     # find file format type
     file_format_type = file_format.get("type")
-    assert file_format_type == "h5ad", "format must be a h5ad type"
+    assert file_format_type in ["h5ad", "anndata_hdf5", "anndata_zarr"], "format must be an AnnData type"
 
     structs = ["layers", "obs", "var", "uns", "obsp", "obsm", "varp", "varm"]
     kwargs = {}
@@ -54,6 +54,9 @@ def subset_h5ad_by_format(adata, config, arg_name, field_rename_dict = {}):
             # where to find the data. if the dest_name is in the rename dict, use the renamed name
             # as the source name, otherwise use the dest_name as the source name
             src_name = struct_rename.get(dest_name, dest_name)
+            # an optional field that is not in the source is left out
+            if not field_format.get("required", True) and src_name not in getattr(adata, struct):
+                continue
             data[dest_name] = getattr(adata, struct)[src_name]
             
         if len(data) > 0:

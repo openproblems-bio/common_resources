@@ -212,7 +212,7 @@ definitions:
     type: object
     properties:
       type:
-        const: h5ad
+        enum: [h5ad, anndata_hdf5, anndata_zarr]
         description: The file format.
       X:
         type: object
@@ -272,6 +272,20 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/MoreDataTypeSpec"
+  KeyedFormat:
+    type: object
+    required: [type]
+    additionalProperties: false
+    properties:
+      type:
+        enum: [json, yaml]
+        description: The file format.
+      keys:
+        type: array
+        items:
+          anyOf:
+            - $ref: "#/definitions/DataTypeSpec"
+            - $ref: "#/definitions/DataTypeObject"
   SpatialDataZarrFormat:
     type: object
     required: [type]
